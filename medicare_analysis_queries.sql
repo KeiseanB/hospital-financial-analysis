@@ -139,3 +139,32 @@ WHERE h.state_code = 'FL'
     AND c.medicare_discharges IS NOT NULL
 ORDER BY medicare_dependency_pct DESC
 LIMIT 15;
+
+
+-- ============================================
+-- QUERY 6: Master Export Query for Tableau
+-- Combines all three tables into one dataset
+-- for visualization in Tableau Public
+-- This is the final analytical dataset
+-- ============================================
+USE medicare_cost_analysis;
+
+SELECT DISTINCT
+    h.hospital_name,
+    h.city,
+    h.state_code,
+    h.rural_versus_urban,
+    c.net_income,
+    c.net_patient_revenue,
+    c.total_costs,
+    c.total_discharges,
+    c.medicare_discharges,
+    f.cost_to_charge_ratio,
+    f.cost_of_charity_care,
+    ROUND((c.medicare_discharges * 100.0) / NULLIF(c.total_discharges, 0), 2) AS medicare_dependency_pct,
+    ROUND((c.combined_total_charges / NULLIF(c.total_costs, 0)), 2) AS charge_markup_ratio
+FROM hospitals h
+JOIN cost_reports c ON h.provider_ccn = c.provider_ccn
+JOIN financial_metrics f ON h.provider_ccn = f.provider_ccn
+WHERE c.net_income IS NOT NULL;
+
